@@ -1,0 +1,3 @@
+[submodule "references/aie-book"]
+	path = references/aie-book
+	url = https://github.com/chiphuyen/aie-book.git
