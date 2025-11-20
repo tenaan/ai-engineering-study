@@ -31,7 +31,7 @@
 
 ### **1.1.1 언어 모델에서 대규모 언어 모델로**
 
- **자기지도 학습(self-supervised learning)**덕분에 **대규모 언어 모델**(LLM)이 성장할 수 있었다
+ **자기지도 학습(self-supervised learning)** 덕분에 **대규모 언어 모델**(LLM)이 성장할 수 있었다
 
 ### **1) 자기 지도**
 
@@ -52,7 +52,7 @@
 
 <aside>
 
-<BOS>: Begin of sentence, <EOS>: End of sentence
+\<BOS\>: Begin of sentence, \<EOS\>: End of sentence
 
 자기 지도 학습: 입력 데이터에서 레이블을 추론 VS 비지도 학습: 레이블 X
 
