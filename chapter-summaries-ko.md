@@ -46,7 +46,7 @@ AI 엔지니어링은 새로운 용어이지만, 모든 ML 모델로 애플리�
 책의 나머지 부분에서는 AI 엔지니어링의 기본 구성 요소인 파운데이션 모델부터 시작하여 이 프레임워크를 단계별로 탐구할 것입니다. 파운데이션 모델은 수많은 놀라운 애플리케이션을 가능하게 합니다.
 
 ## 2장. 파운데이션 모델 이해하기
-<center><img src="references/aie-book/assets/rlhf.png" width="800"><br>
+<center><img src="references/assets/rlhf.png" width="800"><br>
 <i>사전학습, SFT, RLHF를 포함한 전체 학습 워크플로우. 이미지 출처: 저자의 <a href="https://huyenchip.com/2023/05/02/rlhf.html">RLHF 블로그 포스트</a> (2023년 5월)</i>
 </center>
 <br>
@@ -66,7 +66,7 @@ AI 엔지니어링은 새로운 용어이지만, 모든 ML 모델로 애플리�
 AI 모델로 작업하려면 그들의 확률적 특성을 중심으로 워크플로우를 구축해야 합니다. 이 책의 나머지 부분에서는 AI 엔지니어링을 결정적이지는 않더라도 최소한 체계적으로 만드는 방법을 탐구할 것입니다. 체계적인 AI 엔지니어링을 향한 첫 번째 단계는 실패와 예상치 못한 변화를 감지하는 데 도움이 되는 견고한 평가 파이프라인을 구축하는 것입니다. 파운데이션 모델에 대한 평가는 매우 중요하기 때문에 다음 장부터 시작하여 두 개의 장을 할애했습니다.
 
 ## 3장. 평가 방법론
-<center><img src="references/aie-book/assets/ai-judge.png" width="600"><br>
+<center><img src="references/assets/ai-judge.png" width="600"><br>
 <i>그림 3-8. 질문이 주어졌을 때 답변의 품질을 평가하는 AI 심사자의 예시.</i>
 </center>
 <br>
@@ -86,7 +86,7 @@ AI 모델이 강력해질수록 치명적인 실패의 가능성이 높아지며
 언어 모델링 지표와 수작업으로 설계된 유사도 측정은 한동안 존재해왔지만, AI-심사자와 비교 평가는 파운데이션 모델의 등장과 함께 채택되기 시작했습니다. 많은 팀들이 이것들을 평가 파이프라인에 통합하는 방법을 찾고 있습니다. 개방형 애플리케이션을 평가하기 위한 신뢰할 수 있는 평가 파이프라인을 구축하는 방법을 알아내는 것이 다음 장의 주제입니다.
 
 ## 4장. AI 시스템 평가
-<center><img src="references/aie-book/assets/evaluation-process.png" width="600"><br>
+<center><img src="references/assets/evaluation-process.png" width="600"><br>
 <i>그림 4-5. 애플리케이션에 맞는 모델을 평가하기 위한 평가 워크플로우 개요.</i>
 </center>
 <br>
@@ -106,7 +106,7 @@ AI 모델이 강력해질수록 치명적인 실패의 가능성이 높아지며
 이제 많은 사람들이 AI 엔지니어링과 연관짓는 주제인 프롬프트 엔지니어링부터 시작하여 실제 모델 적응 과정으로 넘어가겠습니다.
 
 ## 5장. 프롬프트 엔지니어링
-<center><img src="references/aie-book/assets/prompt-anatomy.png" width="600"><br>
+<center><img src="references/assets/prompt-anatomy.png" width="600"><br>
 <i>그림 5-1. 프롬프트의 구조를 보여주는 간단한 예시.</i>
 </center>
 <br>
@@ -122,7 +122,7 @@ AI 모델이 강력해질수록 치명적인 실패의 가능성이 높아지며
 이 장에서는 또한 모델이 원하는 것을 하도록 더 나은 지시를 작성하는 기법을 논의합니다. 그러나 작업을 수행하려면 모델에게 지시뿐만 아니라 관련 컨텍스트도 필요합니다. 모델에게 관련 정보를 제공하는 방법은 다음 장에서 논의할 것입니다.
 
 ## 6장. RAG와 에이전트
-<center><img src="references/aie-book/assets/rag-architecture.png" width="700"><br>
+<center><img src="references/assets/rag-architecture.png" width="700"><br>
 <i>그림 6-3. 임베딩 기반 또는 의미 기반 검색기가 작동하는 방식의 고수준 뷰.</i>
 </center>
 <br>
@@ -144,7 +144,7 @@ RAG와 에이전트 모두 많은 정보를 다루며, 이는 종종 기본 모�
 RAG와 에이전트는 모두 모델 자체를 수정하지 않고 입력만을 통해 모델의 품질에 영향을 미치는 프롬프트 기반 방법입니다. 이들은 많은 놀라운 애플리케이션을 가능하게 할 수 있지만, 기본 모델을 수정하면 더 많은 가능성이 열릴 수 있습니다. 이를 어떻게 하는지는 다음 장의 주제가 될 것입니다.
 
 ## 7장. 파인튜닝
-<center><img src="references/aie-book/assets/rag-vs-finetune.png" width="700"><br>
+<center><img src="references/assets/rag-vs-finetune.png" width="700"><br>
 <i>그림 7-3. 애플리케이션 개발 흐름 예시. 간단한 검색(예: 용어 기반 검색) 후, 더 복잡한 검색(예: 하이브리드 검색)을 실험할지 파인튜닝을 할지는 각 애플리케이션과 그 실패 모드에 따라 달라집니다.</i>
 </center>
 <br>
@@ -166,7 +166,7 @@ PEFT의 개요를 제공한 후, 이 장은 LoRA—왜 작동하고 어떻게 �
 실무자들로부터 자주 듣는 말은 파인튜닝은 쉽지만 파인튜닝을 위한 데이터를 얻는 것은 어렵다는 것입니다. 고품질 주석 데이터, 특히 지시 데이터를 얻는 것은 어렵습니다. 다음 장에서 이러한 도전에 대해 자세히 살펴볼 것입니다.
 
 ## 8장. 데이터셋 엔지니어링
-<center><img src="references/aie-book/assets/model-perf-dataset.png" width="600"><br>
+<center><img src="references/assets/model-perf-dataset.png" width="600"><br>
 <i>그림 8-3. 다양한 데이터셋 크기에 따른 성능 향상 곡선은 추가 학습 예제가 모델 성능에 미치는 영향을 추정하는 데 도움이 됩니다.</i>
 </center>
 <br>
@@ -188,7 +188,7 @@ PEFT의 개요를 제공한 후, 이 장은 LoRA—왜 작동하고 어떻게 �
 놀라운 모델을 학습시킬 수 있는 훌륭한 데이터셋을 큐레이션했다고 가정하면, 이 모델을 어떻게 서빙해야 할까요? 다음 장에서는 지연 시간과 비용을 위한 추론 최적화 방법을 논의할 것입니다.
 
 ## 9장. 추론 최적화
-<center><img src="references/aie-book/assets/inference-service.png" width="500"><br>
+<center><img src="references/assets/inference-service.png" width="500"><br>
 <i>그림 9-1. 간단한 추론 서비스.</i>
 </center>
 <br>
@@ -214,7 +214,7 @@ PEFT의 개요를 제공한 후, 이 장은 LoRA—왜 작동하고 어떻게 �
 추론 최적화는 이 책에서 다루는 모델 적응 기법 목록을 마무리합니다. 다음 장에서는 이러한 기법을 일관된 시스템으로 통합하는 방법을 탐구할 것입니다.
 
 ## 10장. AI 엔지니어링 아키텍처와 사용자 피드백
-<center><img src="references/aie-book/assets/aie-architecture.png" width="800"><br>
+<center><img src="references/assets/aie-architecture.png" width="800"><br>
 <i>그림 10-10. 일반적인 생성형 AI 애플리케이션 아키텍처.</i>
 </center>
 <br>
