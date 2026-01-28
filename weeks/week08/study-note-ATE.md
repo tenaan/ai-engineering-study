@@ -799,3 +799,634 @@
 </ul>
 </li>
 </ul>
+
+---
+
+- [블로그 링크](https://armugona.tistory.com/entry/AIE-Ch9-%EC%B6%94%EB%A1%A0-%EC%B5%9C%EC%A0%81%ED%99%94?category=1273755)
+  
+#10장 
+<h2 data-ke-size="size26">AI 엔지니어링 아키텍처</h2>
+<p data-ke-size="size16">가장 단순한 아키텍처에서 시작해 더 많은 구성요소를 추가하며 볼 것</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">가장 단순한 형태 : 애플리케이션이 질의를 받아 모델로 보내는 것</p>
+<img width="795" height="330" alt="image" src="https://github.com/user-attachments/assets/1d9822db-4b26-43c3-8366-57165c47ba86" />
+
+<p data-ke-size="size16">모델 API 상자는 서드파티 API와 자체 호스팅 모델 모두 가리킴</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">추가할 수 있는 구성요소들</p>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>정보 수집을 위해 외부 데이터 소스와 도구에 접근할 수 있게 해서, 모델에 입력되는 컨텍스트 보강</li>
+<li>시스템과 사용자 보호를 위한 가드레일 도입</li>
+<li>복잡한 파이프라인 지원, 보안을 강화하기 위해 모델 라우터와 게이트웨이를 추가</li>
+<li>캐싱을 통해 지연 시간과 비용 최적화</li>
+<li>시스템 성능 극대화를 위해 복잡한 로직과 실행 기능 추가</li>
+</ul>
+<p data-ke-size="size16">모니터링 monitoring, 관찰 가능성 observability, 오케스트레이션 orchestration에 대해서도 다룰 예정</p>
+<p data-ke-size="size16">&nbsp;</p>
+<h3 data-ke-size="size23">1.컨텍스트 보강</h3>
+<p data-ke-size="size16">검색 메커니즘 : 텍스트 검색, 이미지 검색, 표 형태 데이터 검색 등</p>
+<p data-ke-size="size16">도구 : 웹 검색, 뉴스, 날씨, 이벤트 등 API 사용해서 자동으로 정보 수집</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16"><b>컨텍스트 구성 context construction</b> 은 파운데이션 모델을 위한<b> 특성 공학 feature engineering </b>과 같음</p>
+<p data-ke-size="size16">: 모델이 출력을 생성하는 데 필요한 정보를 제공하는 것, 컨텍스트 구성이 시스템의 출력 품질에 핵심적인 역할</p>
+<p data-ke-size="size16">따라서 대부분의 모델 API 제공 업체가 파일 업로드 등 기능을 제공하지만 컨텍스트 구성을 지원하는 방식이 제각각임</p>
+<p data-ke-size="size16">전문 RAG 솔루션이라면 벡터 DB 용량이 허용하는 만큼 문서를 무제한으로 올릴 수 있지만 범용 API는 문서 몇 개만 올릴 수 있음</p>
+<p data-ke-size="size16">프레임 워크마다 검색 알고리즘, 청크 크기 같은 검색 설정이 다름, 솔루션마다 도구 사용에서도 도구 지원 범위, 여러 함수 병렬 실행, 오래걸리는 작업 처리 등 다름</p>
+<img width="1150" height="508" alt="image" src="https://github.com/user-attachments/assets/e235bb6c-b51a-42a1-8ae2-c99e4b224f33" />
+
+<p data-ke-size="size16">&nbsp;</p>
+<h3 data-ke-size="size23">2. 가드레일 도입하기</h3>
+<p data-ke-size="size16"><b>가드레일 Guardrail</b> : 위험을 줄이고 애플리케이션 제공자와 사용자를 보호하는 역할을 함, 위험에 노출될 수 있는 모든 지점에 가드레일을 배치해야 함</p>
+<p data-ke-size="size16">일반적으로 <b>입력 가드레일, 출력 가드레일</b>로 나눔&nbsp;</p>
+<p data-ke-size="size16">&nbsp;</p>
+<h4 data-ke-size="size20">입력 가드레일</h4>
+<p data-ke-size="size16">두 가지 유형의 위험을 막아줌</p>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>위부 API로 개인정보가 유출되는 것</li>
+<li>시스템을 망가뜨릴 수 있는 악성 프롬프트 실행</li>
+</ul>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">5장에서 프롬프트 해킹 방법과 방어 기법을 다뤘으나, 이 기법은 위험을 줄일 수는 있지만 모델이 응답을 만드는 고유한 방식과 사람이 저지르는 실수 때문에 완전히 없앨 수 없음</p>
+<p data-ke-size="size16">&nbsp;</p>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>외부 API로 개인정보가 유출되는 위험 : 데이터를 조직 외부로 보내야 하는 외부 모델 API를 사용할 때의 문제<br />
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>직원이 회사 기밀이나 사용자 개인정보를 프롬프트에 복사해서 서드파티 API로 전송</li>
+<li>애플리케이션 개발자가 회사 내부 정책과 데이터를 애플리케이션의 시스템 프롬프트에 넣는 경우</li>
+<li>도구가 내부 데이터베이스에서 개인정보를 가져와서 컨텍스트에 추가하는 경우
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>이러한 잠재적인 유출을 완벽하게 막을 방법은 없으나 가드레일을 통해 줄이고자 함</li>
+<li>민감한 데이터를 자동으로 탐지하는 여러 상용 도구 중 하나를 사용하면 됨 : 어떤 민감한 데이터를 탐지할지는 직접 정해야 함 (개인정보(주민번호, 전화번호, 계좌번호), 사람 얼굴, 회사 지적 재산이나 기밀 정보와 관련된 특정 키워드/문구)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>민감 데이터 탐지 도구는 AI를 사용해 잠재적으로 민감할 수 있는 정보를 식별함
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>특정 문자열이 실제 집 주소와 유사한지 판단</li>
+</ul>
+</li>
+<li>민감한 정보가 포함된 것으로 확인되면, 질의 전체를 차단하거나 / 민감한 정보만 제거</li>
+</ul>
+<img width="1085" height="822" alt="image" src="https://github.com/user-attachments/assets/f1b3ee8e-f9e9-4caf-a61c-ff5ed67d1962" />
+
+<p data-ke-size="size16">&nbsp;</p>
+<h4 data-ke-size="size20">출력 가드레일</h4>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>출력 실패 탐지</li>
+<li>다양한 실패 유형을 처리하는 정책 명시</li>
+</ul>
+<p data-ke-size="size16">실패 양상은 애플리케이션마다 다름</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16"><b>품질과 보안</b>에서 자주 보는 실패 사례</p>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>품질
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>예상한 출력 형식을 따르지 않는 잘못된 형식의 응답 (JSON을 예상했으나 유효하지 않은 JSON 생성)</li>
+<li>환각</li>
+<li>수준이 낮은 응답, 결과물의 질이 매우 나쁜 경우</li>
+</ul>
+</li>
+<li>보안
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>인종차별적이거나 성적인 콘텐츠 또는 불법적인 활동을 담은 유해한 응답</li>
+<li>개인정보나 민감한 정보가 들어있는 응답</li>
+<li>원격 도구나 코드 실행을 유발하는 응답</li>
+<li>자사나 경쟁사에 대해 잘못 설명해서 브랜드에 위험을 초래하는 응답</li>
+</ul>
+</li>
+</ul>
+<p data-ke-size="size16">보안 측정 시에는 오거부율 지표 false refusal rate도 확인해야 함 : 보안을 너무 강하게 적용하면 괜찮은 요청까지 차단하여 사용자의 작업을 방해하고 불편을 초래함</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">많은 실패는 간단한 재시도 로직으로완화할 수 있음: 응답이 비어있으면 N번 다시 시도, 형식이 잘못됐다면 올바른 형식이 나올때까지 $\rightarrow$ 지연 시간과 비용이 늘어날 수 있음, 재시도를 할 때마다 API를 한 번 더 호출해야 함&nbsp;</p>
+<p data-ke-size="size16">$\rightarrow$ 지연 시간을 줄이기 위해 호출을 병렬로 처리할 수도 있음</p>
+<p data-ke-size="size16">까다로운 요청은상담원에서 전달하기 등 대화를 언제 사람에게 넘길지 결정하기 위한 모델을 사용하기도 함</p>
+<p data-ke-size="size16">&nbsp;</p>
+<h4 data-ke-size="size20">가드레일 구현</h4>
+<p data-ke-size="size16">가드레일의 트레이드 오프 : <b>신뢰성과 지연 시간</b>의 트레이드 오프</p>
+<p data-ke-size="size16">지연 시간을 줄이기 위한 스트림 완성 모드(실시간으로 생성된 토큰을 전달stream하는 방식)에서는 출력 가드레일이 제대로 작동하지 않을 수 있음&nbsp;</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">얼마나 많은 가드레일을 구현할 지는 모델을 자체 호스팅하는지, 서드파티 API를 쓰는지에 따라 달라짐&nbsp;</p>
+<p data-ke-size="size16">서드파티 API를 사용하면 제공업체에서 기본으로 가드레일을 제공해 구현해야 할 가드레일의 수를 줄일 수 있음, 모델을 자체 호스팅하면 요청을 외부로 보낼 필요가 없어서 여러 유형의 입력 가드레일에 대한 필요성이 줄어듦</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">애플리케이션이 실패할 수 있는 지점이 매우 다양하므로 가드레일도 다양한 레벨에서 구현할 수 있음</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">사용할 수 있는 가드레일 솔루션 : 메타의 퍼플 라마, 엔비디아의 네모 가드레일, 애저의 파이릿, 애저의 AI 콘텐츠 필러, 퍼스펙티브 API, 오픈AI의 콘텐츠 조정 AI 등</p>
+<p data-ke-size="size16">입력과 출력의 위험이 서로 겹치는 부분이 많아 가드레일 솔루션은 입력과 출력을 모두 보호하는 기능을 제공함</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">가드레일 추가 시 아키텍처</p>
+<img width="1145" height="621" alt="image" src="https://github.com/user-attachments/assets/9716ce6a-355f-4efd-b046-bb13b3a9421a" />
+
+<p data-ke-size="size16">스코어러 Scorer(평가기)는 보통 생성 모델보다 작고 빠르지만 AI 기반인 경우가 많음, 출력 가드레일 상자에 들어가도 됨</p>
+<p data-ke-size="size16">&nbsp;</p>
+<h3 data-ke-size="size23">3. 모델 라우터와 게이트웨이 추가</h3>
+<p data-ke-size="size16">여러 모델을 서빙하는데 따르는 복잡성과 비용을 관리하기 위한 라우터와 게이트웨이가 필요함</p>
+<p data-ke-size="size16">&nbsp;</p>
+<h4 data-ke-size="size20">라우터</h4>
+<p data-ke-size="size16">모든 질의에 하나의 모델만 사용하는 대신, 질의 유형별로 각기 다른 솔루션을 사용할 수 있음</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">장점</p>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>특정 질의에 대해서 범용 모델보다 성능이 더 좋을 수 있는 특화 모델을 사용할 수 있음
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>기술적인 문제 해결에 특화된 모델과 요금 청구에 특화된 모델</li>
+</ul>
+</li>
+<li>비용 절약
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>모든 질의에 비싼 모델을 쓰지 않고 단순한 질의는 저렴한 모델로</li>
+</ul>
+</li>
+</ul>
+<p data-ke-size="size16">라우터는 사용자가 무엇을 하려 하는지 예측하는 <b>의도 분류기 intent classifier</b>로 구성됨</p>
+<p data-ke-size="size16">예측된 의도를 바탕으로 질의를 적절한 솔루션으로 보냄</p>
+<p data-ke-size="size16">시스템이 범위를 벗어난 대화에 빠지는 것을 막을 수 있음 : 질의가 부적절하다고 판단해 응답을 거절하거나 애매한 질의 감지</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">모델이 다음에 무엇을 할지 결정하는 데 도움을 주는 종류의 라우터 : 여러 작업이 가능한 에이전트의 경우 다음에 어떤 행동을 해야할지 예측하는 <b>다음 행동 예측기 next-action predictor</b>의 역할을 할 수 있음, 메모리 시스템을 갖춘 경우, 모델이 메모리 계층의 어느 부분에서 정보를 가져와야 할지 예측, 첨부된 문서 정보에 의존할지 질의에 대해 인터넷 검색할지 결정</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">의도 분류기와 다음 행동 예측기는 파운데이션 모델을 기반으로 구현할 수 있음 : GPT-2, BERT, 라마 7B같은 작은 언어 모델을 의도 분류기로 활용, 작은 분류기를 처음부터 만들기도 $\rightarrow$ <b>라우터는 빠르고 저렴해야 함</b>, 여러개를 사용해도 지연 시간과 비용이 크게 늘어나지 않도록</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">컨텍스트 한계가 있는 모델로 질의를 라우팅할 땐 질의의 컨텍스트를 그에 맞게 조정해야할 수 있음 : 4k 컨텍스트 한계가 있는 모델로 보낼 예정인 1,000토큰 짜리 질의가 있을때 8,000토큰의 컨텍스트를 웹 검색으로 가져왔다고 가정, 모델에 맞게 질의의 컨텍스트를 잘라내거나 더 큰 컨텍스트를 가진 모델로 질의를 라우팅</p>
+<p data-ke-size="size16">&nbsp;</p>
+<img width="1135" height="719" alt="image" src="https://github.com/user-attachments/assets/562d031e-95ac-4df3-8fd9-a159e82642b9" />
+
+<p data-ke-size="size16">라우터를 다른 모델과 함께 묶으면 모델을 더 쉽게 관리할 수 있음</p>
+<p data-ke-size="size16">라우팅의 위치는 유연하게 정할 수 있지만(라우팅-검색, 검색-라우팅도 가능), 보통은 라우팅-검색-생성-스코어링(평가)의 흐름이 일반적임&nbsp;</p>
+<p data-ke-size="size16">&nbsp;</p>
+<h4 data-ke-size="size20">게이트웨이</h4>
+<p data-ke-size="size16">조직이 다양한 모델과 통합되고 안전한 방식으로 상호작용할 수 있게 해주는 중간 계층</p>
+<p data-ke-size="size16">가장 기본적인 기능 : 자체 호스팅 모델과 상용 API 뒤에 있는 모델을 포함한 다양한 모델에 통합 인터페이스를 제공하는 것, 코드 유지보수가 더 쉬워짐 $\rightarrow$ 모델 API가 변경되더라도 이 API에 의존하는 모든 애플리케이션을 업데이트할 필요 없이 게이트웨이만 업데이트하면 됨</p>
+<img width="907" height="538" alt="image" src="https://github.com/user-attachments/assets/17422ae5-b519-412c-a1ad-fdcb4494bc13" />
+
+<p data-ke-size="size16">가장 단순한 형태의 모델 게이트웨이는 통합 래퍼</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">모델 게이트웨이는 <b>접근 제어 access control, </b><b>비용 관리 cost management</b> 기능을 제공함</p>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>API에 접근하려는 모든 사람에게 쉽게 유출될 위험이 있는 조직 토큰을 직접 주는 대신, 중앙에서 접근을 통제할 수 있는 모델 게이트웨이라는 단일 접근 지점을 만들어 그곳에 접근 권한을 부여</li>
+<li>사용자나 애플리케이션이 어떤 모델에 접근해야 하는지 명시하는 세분화된 접근 제어를 구현할 수도 있음</li>
+<li>게이트웨이는 API 호출 사용량을 모니터닝하고 제한해서 남용을 방지하고 비용을 효과적으로 관리할 수 있음</li>
+</ul>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">속도 제한이나 API 실패를 극복하기 위한 <b>폴백 정책 fallback policy</b>을 만드는 데 활용</p>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>주요 API를 사용할 수 없을 때, 게이트 웨이는 요청을 대체 모델로 보내거나, 잠시 기다린 후 재시도하거나, 다른 방식으로 실패를 원활하게 처리할 수 있음</li>
+<li>애플리케이션이 중단 없이 원활하게 작동하도록 보장할 수 있음</li>
+</ul>
+<p data-ke-size="size16">모든 요청과 응답이 게이트웨이를 거치게 되므로, 게이트웨이는 로드 밸런싱, 로깅, 분석 같은 다른 기능을 구현하기에 가장 적합한 장소 (일부는 캐싱이나 가드레일을 제공하기도 함)</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">포트키의 AI 게이트웨이, MLflow AI 게이트웨이, 웰스심플의 LLM 게이트웨이, 트루파운드리, 콩, 클라우드플레어 등 사용할 수 있음</p>
+<img width="1167" height="753" alt="image" src="https://github.com/user-attachments/assets/ffe2fb96-afe2-4fdb-8a32-1a7bf847974c" />
+
+<p data-ke-size="size16">&nbsp;</p>
+<h3 data-ke-size="size23">4. 캐시로 지연 시간 줄이기</h3>
+<p data-ke-size="size16">시스템 캐싱 메커니즘</p>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li><b>완전 일치 캐싱 exact caching</b></li>
+<li><b>시맨틱 캐싱 semantic caching</b></li>
+</ul>
+<p data-ke-size="size16">&nbsp;</p>
+<h4 data-ke-size="size20">완전 일치 캐싱</h4>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>정확히 같은 항목이 요청될 때만 캐시된 항목을 사용
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>벡터 검색이 중복되는 것을 피하기 위해 임베딩 기반 검색에서도 사용됨 : 들어온 질의가 이미 벡터 검색 캐시에 있다면 캐시된 결과를 가져옴, 없으면 벡터 검색 수행 후 결과를 캐시에 저장</li>
+<li>CoT처럼 여러 단계를 포함하거나 검색, SQL 실행, 웹 검색처럼 시간이 오래 걸리는 동작이 포함된 질의에 특히 매력적임</li>
+</ul>
+</li>
+<li>빠른 검색을 위해 인메모리 저장소를 사용해 구현할 수 있으나 인 메모리 저장소는 용량이 제한적임
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>속도와 저장 용량의 균형을 맞추기 위해 PostgreSQL, 레디스 Redis같은 데이터베이스나 계층형 저장소를 사용해 캐시를 구현할 수 있음</li>
+</ul>
+</li>
+<li>캐시 크기 관리 및 성능 유지에는 제거 정책이 중요함
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>LRU least recently used : 가장 최근에 사용된 것 제거</li>
+<li>LFU least frequently used : 가장 적게 사용된 것 제거</li>
+<li>FIFO first in first out : 가장 먼저 들어온 것부터 제거</li>
+</ul>
+</li>
+<li>다시 호출될 가능성이 얼마나 높은지에 따라 캐시를 얼마나 오래 보관할지 결정됨 : 질의를 캐시에 저장해야 할지 예측하는 별도의 분류기를 학습시키기도 함</li>
+</ul>
+<p data-ke-size="size16">&nbsp;</p>
+<h4 data-ke-size="size20">시맨틱 캐싱</h4>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>들어온 질의와 캐시된 항목이 완전히 똑같지 않더라도 의미적으로만 비슷하면 캐시된 항목을 사용함</li>
+<li>비슷한 질의를 재사용하면 캐시 적중률이 높아지고 잠재적으로 비용도 줄일 수 있지만, 모델의 성능을 저하시킬 수도 있음
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>두 질의가 유사한지 판단할 수 있는 방법이 확실히 있을 때만 제대로 작동함 $\rightarrow$ 의미적 유사도를 활용
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>질의마다 임베딩 생성, 벡터 검색으로 현재 질의 임베딩과 가장 높은 유사도 점수를 가진 캐시된 임베딩을 찾고, 특정 유사도 임곗값보다 높으면 캐시된 질의와 유사한 것으로 판단하고 캐시된 결과를 반환함, 그렇지 않으면 현재 질의 처리 후 결과와 임베딩을 캐시에 저장</li>
+<li>캐시된 임베딩을 저장하기 위한 벡터 DB가 필요함</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>시맨틱 캐싱 단점
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>제대로 작동하려면 좋은 품질의 임베딩, 안정적인 벡터 검색, 신뢰할 수 있는 유사도 측정 모두 필요함</li>
+<li>적절한 유사도 임곗값을 설정하기도 까다로움, 잘못 판단 시 응답이 틀릴 수 있음</li>
+<li>벡터 검색이 포함되어 있어 시간이 오래걸리고 연산량도 많음, 벡터 검색의 속도와 비용은 캐시에 저장된 임베딩의 크기에 달려있음</li>
+</ul>
+</li>
+<li>캐시 적중률이 높을 때 가치 있지만 복잡하므로 추가하는데 효율성, 비용, 성능 위험을 꼼꼼히 검토해야 함</li>
+</ul>
+<img width="1153" height="805" alt="image" src="https://github.com/user-attachments/assets/a1e404a7-5266-466e-83f7-dc2a0601cbc8" />
+
+<p data-ke-size="size16">&nbsp;</p>
+<h3 data-ke-size="size23">5. 에이전트 패턴 추가</h3>
+<p data-ke-size="size16">지금까지는 각 질의가 순차적인 흐름을 따랐지만, 루프, 병렬 실행, 조건부 분기 등으로 더 복잡해질 수 있음 (6장)</p>
+<img width="950" height="682" alt="image" src="https://github.com/user-attachments/assets/b700accc-fb8e-41c0-ab1c-4c5274a55880" />
+
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>출력 생성 후 작업을 완료하지 못했다 판단해 더 많은 정보를 수집하기 위해 또 다른 검색을 수행, 원래 응답과 새로 검색한 컨텍스트를 합쳐서 같은(혹은 다른)모델에 다시 넣기</li>
+<li>모델의 출력은 이메일 작성, 주문하기 등 <b>쓰기 작업 호출</b>에 사용될 수도 있음
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>쓰기 작업 권한은 최대한 신중하게 줘야함</li>
+</ul>
+</li>
+</ul>
+<img width="953" height="647" alt="image" src="https://github.com/user-attachments/assets/bc6e8bd3-7cf5-4da3-8de2-85bfbd328e89" />
+
+<p data-ke-size="size16">&nbsp;</p>
+<h3 data-ke-size="size23">6. 모니터링과 관찰 가능성</h3>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li><b>관찰 가능성 observability</b>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>제품을 설계할 때부터 핵심에 두어야 함, 제품이 복잡해질수록 중요해짐</li>
+<li>모든 소프트웨어 엔지니어링 분야에서 널리 쓰이는 방법</li>
+<li>검증된 모범 사례와 상용 및 오픈 소스 솔루션을 갖춘 산업</li>
+<li>책에서는 파운데이션 모델 기반 애플리케이션에서만 나타나는 고유한 문제와 기법들에 초점을 맞춤</li>
+</ul>
+</li>
+</ul>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">모니터링의 목표는 평가의 목표와 같음 : 위험을 줄이고 (개선과 비용 절감 등의)기회를 발견, 책임 소재 명확히</p>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>위험 : 애플리케이션 실패, 보안 공격, 드리프트</li>
+</ul>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">관찰 가능성 수준을 평가할 수 있는 세가지 지표</p>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>평균 탐지 시간 mean time to detection MTTD : 문제가 생겼을 때, 감지하는데 얼마나 걸리는가</li>
+<li>평균 응답 시간 mean time to reponse MTTR : 감지한 후, 해결되는데 얼마나 걸리는가</li>
+<li>변경 실패율 change failure rate CFR : 수정이나 롤백이 필요한 실패를 일으키는 변경이나 배포의 비율, 현재 CFR을 모른다면 플랫폼을 더 관찰 가능하도록 재설계해야할 때</li>
+</ul>
+<p data-ke-size="size16">CFR이 높다고 해서 반드시 모니터링 시스템이 나쁘다는 것은 아니지만, 잘못된 변경사항이 배포되기 전에 잡힐 수 있도록 평가 파이프라인 점검이 필요함</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">평가 지표는 모니터링 지표로 이어져야 함 : 평가 단계에서 좋았다면 모니터링에서도 좋은 성능을 보여야함, 모니터링 중에 발견된 문제는 평가 파이프라인에 발견되어야 함</p>
+<p data-ke-size="size16">&nbsp;</p>
+<h4 data-ke-size="size20">지표</h4>
+<p data-ke-size="size16">지표 자체는 목적이 될 수 없음</p>
+<p data-ke-size="size16">어떤 실패 유형을 잡고 싶은지, 실패 중심으로 지표를 설계하는 것이 중요</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">파운데이션 모델의 개방형 출력은 다양한 문제들을 발생시킴</p>
+<p data-ke-size="size16">지표 설계에는 분석적 사고, 통계 지식, 창의성이 필요함</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">어떤 지표를 추적할지는 애플리케이션마다 다름</p>
+<p data-ke-size="size16">여러 유형의 모델 품질 지표 (4~6장), 계산하는 다양한 방법 (3, 5장)</p>
+<p style="color: #333333; text-align: start;" data-ke-size="size16"><b><br />복습</b></p>
+<p style="color: #333333; text-align: start;" data-ke-size="size16">추적하기 가장 쉬운 유형 $\rightarrow$ 형식 실패 (유효하지 않은 JSON 등, 이때 쉽게 고칠 수 있는 것이 얼마나 있는지 추적해야 함)</p>
+<p style="color: #333333; text-align: start;" data-ke-size="size16">개방형 생성 <span style="color: #333333; text-align: start;">$\rightarrow$<span> 사실 일관성, 간결성, 창의성, 긍정성 (AI 평가자 사용)</span></span></p>
+<p style="color: #333333; text-align: start;" data-ke-size="size16"><span style="color: #333333; text-align: start;"><span>안전 <span style="color: #333333; text-align: start;">$\rightarrow$<span>&nbsp; 관련 지표 추적, 입출력에서 개인정보나 민감한 정보 탐지, 가드레일이 얼마나 자주 작동하는지, 시스템이 얼마나 자주 응답을 거부하는지, 이상한 질의 탐지</span></span></span></span></p>
+<p style="color: #333333; text-align: start;" data-ke-size="size16"><span style="color: #333333; text-align: start;"><span><span style="color: #333333; text-align: start;"><span>모델 품질 <span style="color: #333333; text-align: start;">$\rightarrow$<span> 사용자의 자연어 피드백, 대화신호로 추론 (생성 중단 빈도, 턴 수, 입력당 평균 토큰 수, 출력 당 평균 토큰 수, 출력 토큰 분포), 길이 관련 지표는 지연 시간과 비용 추적에도 중요함</span></span></span></span></span></span><span style="color: #333333; text-align: start;"><span><span style="color: #333333; text-align: start;"><span><span style="color: #333333; text-align: start;"><span></span></span></span></span></span></span></p>
+<p style="color: #333333; text-align: start;" data-ke-size="size16">&nbsp;</p>
+<p style="color: #333333; text-align: start;" data-ke-size="size16"><span style="color: #333333; text-align: start;"><span><span style="color: #333333; text-align: start;"><span><span style="color: #333333; text-align: start;"><span>애플리케이션 파이프라인의 구성 요소마다의 고유한 지표</span></span></span></span></span></span></p>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>RAG 애플리케이션에서는 검색 품질 평가를 위한 컨텍스트 관련성, 컨텍스트 정확도 사용</li>
+<li>벡터 DB는 데이터를 색인화하는 데 필요한 저장 공간의 양과 데이터를 쿼리하는 데 걸리는 시간으로 평가</li>
+</ul>
+<p data-ke-size="size16">여러 지표 간 상관관계, 일일 활성 사용자 daily active user (DAU), 세션 지속 시간, 구독 수 같은 비즈니스 핵심 지표와의 상관관계를 측정하는 것이 유용함</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">지연 시간 추적은 사용자 경험 이해에 필요함 (9장) <span style="color: #333333; text-align: start;">$\rightarrow$<span> TTFT, TPOT, 총 지연 시간</span></span></p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16"><span style="color: #333333; text-align: start;"><span>비용 추적 <span style="color: #333333; text-align: start;">$\rightarrow$<span>&nbsp; 질의 수, 초당 토큰 수 (TPS) 같은 입출력 토큰의 양</span></span></span></span></p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16"><span style="color: #333333; text-align: start;"><span><span style="color: #333333; text-align: start;"><span>지표 계산 시 표본 검사 or 전수 검사 <span style="color: #333333; text-align: start;">$\rightarrow$<span>&nbsp; 시스템 요구사항과&nbsp; 가용 자원에 따라 달라짐, 적절히 조합해 균형 잡힌 모니터링 전략 만들기</span></span></span></span></span></span></p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16"><span style="color: #333333; text-align: start;"><span><span style="color: #333333; text-align: start;"><span><span style="color: #333333; text-align: start;"><span>지표 계산 시 사용자, 릴리즈 버전, 프롬프트/체인 버전, 프롬프트/체인 타입, 시간같은 관련 기준으로 세분화하면 성능 변화를 이해하고 특정 문제를 찾아내는 데 도움이 됨</span></span></span></span></span></span></p>
+<p data-ke-size="size16">&nbsp;</p>
+<h4 data-ke-size="size20"><span style="color: #333333; text-align: start;"><span><span style="color: #333333; text-align: start;"><span><span style="color: #333333; text-align: start;"><span>로그와 트레이스</span></span></span></span></span></span></h4>
+<p data-ke-size="size16"><span style="color: #333333; text-align: start;"><span><span style="color: #333333; text-align: start;"><span><span style="color: #333333; text-align: start;"><span>지표는 속성와 이벤트를 나타내는 수치적 측정값</span></span></span></span></span></span></p>
+<p data-ke-size="size16"><b><span style="color: #333333; text-align: start;"><span><span style="color: #333333; text-align: start;"><span><span style="color: #333333; text-align: start;"><span>로그</span></span></span></span></span></span></b><span style="color: #333333; text-align: start;"><span><span style="color: #333333; text-align: start;"><span><span style="color: #333333; text-align: start;"><span>는&nbsp;<b>추가만 가능한&nbsp;</b>append-only 이벤트 기록 <span style="color: #333333; text-align: start;">$\rightarrow$<span> 지표가 5분 전에 문제가 생겼다고 알려주지만 정확히 무슨 일이 일어났는지는 모름, 로그의 에러와 지표를 연관지어서 올바른 문제 식별 확인</span></span></span></span></span></span></span></span></p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">빠른 탐지를 위한 빠른 지표 계산</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">로깅의 원칙 : 모든 것을 로깅</p>
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>모델 API 엔드포인트, 모델 이름, 샘플링 설정(온도, top-p, top-k, 중단 조건 등), 프롬프트 템플릿 등 모든 설정</li>
+<li>사용자 질의, 모델에 전송된 최종 프롬프트, 출력, 중간 출력, 도구 호출, 도구 출력</li>
+<li>구성 요소의 시작과 끝, 충돌 발생 시점
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>로그를 기록할 땐 시스템의 어느 부분에서 왔는지 알 수 있도록 태그와 ID를 부여해야함</li>
+</ul>
+</li>
+<li>로그의 양이 빠르게 증가할 수 있음
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>자동화된 로그 분석과 로그 이상탐지를 위한 AI로 구동</li>
+<li>수동으로 처리하기 어렵지만 직접 살펴보는 것은 유용함</li>
+</ul>
+</li>
+</ul>
+<p data-ke-size="size16">로그는 개별 이벤트들을 따로 기록한 것</p>
+<p data-ke-size="size16"><b>트레이스</b>는 관련된 이벤트들을 하나로 연결해서 하나의 트랜잭션이나 프로세스의 완전한 타임라인을 만든 것, 처음부터 끝까지 각 단계가 어떻게 연결되는지 보여줌 <span style="color: #333333; text-align: start;">$\rightarrow$<span> 각 단계에 걸린 시간과 관련 비용까지 함께 보여줘야 함</span></span></p>
+<img width="753" height="878" alt="image" src="https://github.com/user-attachments/assets/ca304b9c-22c0-41b4-a8e8-49bcc47901cd" />
+
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">트레이스 활용 시, 이상적으로 각 질의가 시스템을 거쳐가며 변화하는 과정을 단계적으로 추적할 수 있어야 함, 질의가 실패했을 때 어느 단계에서 문제가 발생했는지 짚어내기 위함</p>
+<p data-ke-size="size16">&nbsp;</p>
+<h4 data-ke-size="size20">드리프트 감지</h4>
+<p data-ke-size="size16">시스템의 구성 요소가 많을 수록 바뀔 수 있는 것들도 많아짐</p>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li><b>시스템 프롬프트 변경</b></li>
+<li><b>사용자 행동 변화</b></li>
+<li><b>기반 모델 변경</b></li>
+</ul>
+<p data-ke-size="size16">&nbsp;</p>
+<h3 data-ke-size="size23">AI 파이프라인 오케스트레이션</h3>
+<p data-ke-size="size16">AI 애플리케이션은 시간이 지날 수록 상당히 복잡해질 수 있음&nbsp;</p>
+<p data-ke-size="size16">오케스트레이터 : 복잡함을 해소하기 위해 서로 다른 구성 요소들의 상호작용 방식을 정의, 엔드투엔드 파이프라인을 구성, 구성 요 간에 데이터가 원활하게 흐르도록 보장</p>
+<p data-ke-size="size16">&nbsp;</p>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li><b>구성 요소 정의 compontnets definition</b>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>시스템이 어떤 요소들을 쓰는지 오케스트레이터에게 알려주기</li>
+<li>다양한 모델, 검색을 위한 외부 데이터 소스, 시스템이 사용할 수 있는 도구</li>
+<li>모델 게이트웨이를 사용하면 모델을 더 쉽게 추가할 수 있음</li>
+<li>평가나 모니터링 도구</li>
+</ul>
+</li>
+<li><b>체이닝 chaining (파이프라이닝 pipelining)</b>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>함수를 조합하는 것</li>
+<li>여러 다른 함수(구성 요소)들을 하나로 엮음</li>
+<li>질의를 받는 순간부터 작업을 완료할 때까지 시스템이 수행하는 단계들을 오케스트레이터에게 알려줌</li>
+</ul>
+</li>
+<li>구성 요소들 사이에서 데이터를 전달하는 역할임
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>현재 단계의 출력이 다음 단계에서 예상하는 형식인지 확인해주는 도구들 제공</li>
+<li>구성 요소 실패나 데이터 불일치 오류로 데이터 흐름이 끊어질때 사용자에게 알려줘야 함</li>
+</ul>
+</li>
+<li>에어플로 Airflow, 메타플로 Metaflow 같은 일반적인 워크플로 오케스트레이터와 다름</li>
+</ul>
+<p data-ke-size="size16">요구사항이 엄격한 애플리케이션의 파이프라인을 설계할 때는 가능한 한 많은 작업을 병렬로 처리하면 좋음 : 라우팅 구성 (질의를 어디로 보낼지) 요소와 개인정보 제거 구성 요소가 있다면 둘을 동시에 처리할 수 있음</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">AI 오케스트레이션 도구 : 랭체인, LlamaIndex, Flowise, Langflow, Haystack 등, 검색과 도구 사용은 일반적인 애플리케이션 패턴 $\rightarrow$ RAG 및 에이전트 프레임우크도 오케스트레이션 도구 역할을 함</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">처음에는 도구 없이 만들어 볼 것 : 외부 도구는 복잡성을 더함, 시스템을 이해하고 디버깅하기 어렵게 함</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">오케스트레이터 평가 시 명심해야 할 세 가지</p>
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li><b>통합과 확장성</b>
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>현재 사용중이거나 앞으로 도임할 수도 있는 구성 요소들을 지원하는지 평가해야 함
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>라마 모델을 쓰고 싶다면 오케스트레이터가 지원하는지 확인해야 함</li>
+<li>오케스트레이터의 확장성 고려</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><b>복잡한 파이프라인 지원</b>
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>분기, 병렬 처리, 오류 처리 같은 고급 기능을 지원하는 오케스트레이터는 복잡성을 효율적으로 관리하는 데 도움이 될 것, 지원 여부 확인이 필요함</li>
+</ul>
+</li>
+<li><b>사용 편의성, 성능, 확장성</b>
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>사용자 친화성 : 직관적인 API, 포괄적인 문서, 강력한 커뮤니티 지운</li>
+<li>애플리케이션, 개발자, 트래픽 수가 증가하면서 효과적으로 확장될 수 있는지 확인</li>
+</ul>
+</li>
+</ul>
+<hr contenteditable="false" data-ke-type="horizontalRule" data-ke-style="style6" />
+<h2 data-ke-size="size26">사용자 피드백</h2>
+<p data-ke-size="size16">사용자 피드백 : 애플리케이션 성능 평가, 개발 방향에 정보 제공, 독점 데이터, 경쟁 우위의 원천</p>
+<p data-ke-size="size16">모델 개인화부터 앞으로 나올 모델 학습에도 사용될 수 있음, 민감한 데이터를 활용할 때 주의하기, 사용자는 자신의 데이터가 어떻게 사용되는지 알 권리가 있음</p>
+<p data-ke-size="size16">&nbsp;</p>
+<h3 data-ke-size="size23">대화형 피드백 추출</h3>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li><b>명시적 피드백 explicit feedback</b>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>좋아요/싫어요, 추천/비추천, 별점 평가, 질의에 대한 예/아니오</li>
+</ul>
+</li>
+<li><b>암시적 피드백 implicit feedback</b>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>행동에서 추론한 정보
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>e.g. 애플리케이션이 추천한 제품을 구매</li>
+</ul>
+</li>
+<li>애플리케이션의 특성에 따라 달라짐</li>
+</ul>
+</li>
+</ul>
+<p data-ke-size="size16">대화형 인터페이스는 피드백을 주기 더 쉽게 만듦 $\rightarrow$ AI가 사용자와 대화하는 것 자체가 성능과 선호도에 대한 피드백</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">사용자 피드백의 활용</p>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>평가 : 애플리케이션을 모니터링할 지표 도출</li>
+<li>개발 : 향후 모델 학습이나 개발 방향 안내</li>
+<li>개인화 : 각 사용자에게 맞게 애플리케이션을 개인화</li>
+</ul>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16"><b>암시적 대화형 피드백 implicit conversational feedback </b>: 사용자의 메세지 내용, 의사소통 패턴에서 추론 가능, 꼼꼼한 데이터 분석과 사용자 연구 필요<b></b></p>
+<p data-ke-size="size16">&nbsp;</p>
+<h4 data-ke-size="size20">자연어 피드백</h4>
+<p data-ke-size="size16">사용자와의 대화에서 추출한 내용</p>
+<p data-ke-size="size16">자연여 피드백의 예시들</p>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>조기 종료
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>생성을 중간에 멈추거나 종료, 그만하라고 말하기, 에이전트 방치 등</li>
+</ul>
+</li>
+<li>오류 교정
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>후속 질의에 아니요 등&nbsp;</li>
+<li>오류를 고치기 위해 다른 방식으로 질의를 표현하려는 시도를 휴리스틱이나 ML 모델을 사용해 탐지</li>
+<li>사용자가 모델이 잘못 행동한 경우 지적할 수 있음</li>
+<li>행동 교정 피드백은 에이전트를 더 좋은 행동으로 유도하는 에이전트 활용 사례에서 흔함</li>
+<li>일부 애플리케이션은 사용자가 모델 응답을 직접 편집할 수 있도록 함 (사용자가 무엇을 선호하는지 알 수 있게 해주는 데이터)</li>
+</ul>
+</li>
+<li>불평
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>출력 고정없이 그냥 불평</li>
+<li>어떤 지점에서 사용자가 마음에 안드는지 이해하여 봇을 개선해야 함</li>
+</ul>
+</li>
+</ul>
+<img width="1181" height="728" alt="image" src="https://github.com/user-attachments/assets/131ba317-2ffc-4342-8905-97bf3f0f829d" />
+
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>감정
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>부정적인 감정 : 좌절, 실망, 조롱 등
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>e.g. 콜센터에서 사용자 목소리 추적</li>
+</ul>
+</li>
+<li>모델 응답에서 추론 : 응답 거부율</li>
+</ul>
+</li>
+</ul>
+<p data-ke-size="size16">&nbsp;</p>
+<h4 data-ke-size="size20">기타 대화형 피드백&nbsp;</h4>
+<p data-ke-size="size16">메세지 대신 행동에서 얻을 수 있는 피드백</p>
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>재생성
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>맘에 안들거나 비교용</li>
+<li>생성같은 창의적인 요청에서 흔함</li>
+<li>구독 기반 앱보다 사용량 기반 과금 앱에서 의미가 더 클 수 있음</li>
+</ul>
+</li>
+<li>대화 관리
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>삭제, 이름 변경, 공유, 북마크 등</li>
+</ul>
+</li>
+<li>대화 길이
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>대화당 턴 수</li>
+<li>긍정인지 부정인지는 앱마다 다름
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>재미를 위한 거라면 긴 대화는 대화를 즐기고 있다는 뜻, 생산성을 목표로 하는 경우 비효율적</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>대화 다양성
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>고유 토큰이나 주제 개수로 측정 가능</li>
+</ul>
+</li>
+</ul>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">명시적 피드백은 해석하기 더 쉽지만 사용자에게 추가적인 노력을 요구 : 사용자가 적은 애플리케이션에서 특히 드물게 나타날 수 있음, 응답 편향의 문제 (불만족한 사용자들이 불평할 가능성이 더 높음)</p>
+<p data-ke-size="size16">암시적 피드백은 많지만 노이즈도 그만큼 많음 : 해석하기 어려울 수 있음 $\rightarrow$ 사용자 자체 연구가 중요</p>
+<p data-ke-size="size16">&nbsp;</p>
+<h3 data-ke-size="size23">피드백 설계</h3>
+<h4 data-ke-size="size20">피드백을 수집하는 시점</h4>
+<p data-ke-size="size16">수집이 사용자의 흐름을 방해해서는 안됨</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">사용자 피드백이 특히 유용할 수 있는 상황</p>
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>처음 시작할 때
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>사용자를 위한 초기 앱의 동작을 보정 calibrate 하는데 도움이 됨</li>
+<li>음성 어시스턴트, 언어 학습 앱, 얼굴 인식 등 일부 앱에서는 보정이 꼭 필요함, 다른 앱에서는 제품 사용에 마찰을 일으킬 수 있기 때문에 선택 사항으로 하는 것이 좋음</li>
+</ul>
+</li>
+<li>문제가 생겼을 때
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>환각, 정당한 요청 차단, 문제가 되는 이미지 생성, 응답 지연 등 문제에 대해 피드백을 남길 수 있어야 함</li>
+<li>이상적으로는 제품이 실수를 해도 사용자들이 작업을 완수할 수 있어야 함
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>e.g. 잘못 분류시 재분류, 사용자가 AI와 협력, 사람과 협력</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<img width="967" height="1014" alt="image" src="https://github.com/user-attachments/assets/a0adc743-401f-4a72-adb4-738be28ae3d8" />
+
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>모델의 신뢰도가 낮을 때
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>모델 자체가 특정 행동에 대해 확신하지 못할 때, 피드백을 요청해서 신뢰도를 높일 수 있음
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>e.g. 짧은 요약 vs 긴 요약 <span style="color: #333333; text-align: start;">선택권 주기<span> </span></span>$\rightarrow$ 선호도 파인튜닝에 사용 가능, 노이즈가 많은 투표로 이어질 수도 있음 (그래서 일부는 응답의 시작 부분만 보여줌), <span style="color: #333333; text-align: start;"><span>&nbsp;</span>사진 정리 시 동일인물인지 확인받기</span></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">애플리케이션은 기본적으로 좋은 결과를 내놓아야 한다&nbsp; $\rightarrow$ 긍정적/부정적 피드백 둘다 요청하는 것을 권장하지 않음 (애플 입장), 궁극적으로 만족하면 계속 씀</p>
+<p data-ke-size="size16">놀라운 것을 경험했을 때 피드백을 줄 수 있는 옵션이 있어야 한다는 주장 $\rightarrow$ 시간내서 칭찬할만큼 좋아하는게 뭔지 알 수 있음</p>
+<p data-ke-size="size16">사용자가 귀찮아할 수도 있으니 사용자가 많다면 1%에게만 요청을 보여주자 (사용자 비율 작을 수록 편향 위험 커짐)</p>
+<p data-ke-size="size16">&nbsp;</p>
+<h4 data-ke-size="size20">피드백 수집 방법</h4>
+<p data-ke-size="size16">사용자의 워크플로에 자연스럽게 녹아들어야 함, 쉽게 무시할 수도 있어야 함, 좋은 피드백을 제공하도록 유도하는 인센티브 필요</p>
+<img width="1185" height="552" alt="image" src="https://github.com/user-attachments/assets/92ae2f66-f893-4afb-aa07-82db7cb02d82" />
+<img width="1198" height="829" alt="image" src="https://github.com/user-attachments/assets/ed29ebe1-20b1-47f8-a1c7-4a9b5b426bb2" />
+
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">챗PGT나 클로드같은 독립형 애플리케이션은 사용자의 일상 워크플로에 통합되어 있지 않아 기존 도구에 내장된 제품만큼 고품질 피드백을 수집하기 어려움, 피드백만으로도 제품 분석에 도움이 될 수 있음 $\rightarrow$ But 깊이있는 분석을 위해서는 이전 5~10개의 대화같은 주변 컨텍스트가 필요</p>
+<p data-ke-size="size16">$\rightarrow$ 이런 컨텍스트에는 개인 식별 정보가 포함될 수도 있어 명시적으로 동의하지 않으면 컨텍스트를 얻는 것이 불가능함 $\rightarrow$ 서비스 약관에 분석과 제품 개선을 위해 사용자 데이터에 접근할 수 있다는 조항을 넣음</p>
+<p data-ke-size="size16">조항이 없는 경우엔 사용자들에게 최근 상호작용 데이터를 기부(공유)해달라고 요청</p>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">사용자에게 피드백이 어떻게 사용되는지 설명하면 더 많고 더 좋은 피드백 주도록 동기부여 가능</p>
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>제품 개인화, 일반적인 사용량 통계 수집, 새로운 모델 학습</li>
+<li>개인정보 보호를 우려한다면 모델 학습에 사용되지 않거나 기기 외부로 나가지 않음을 알려야 함</li>
+<li>불가능한 것 요구하지 않기 (모르겠다는 선택지)</li>
+<li>사용자의 이해를 돕기 위해 선택지에 아이콘이나 툴팁 추가, 헷갈리게 할 수 있는 디자인은 피하기</li>
+</ul>
+<img width="1171" height="679" alt="image" src="https://github.com/user-attachments/assets/5ccfb9ab-c6e0-4458-8664-1fccf9f76b00" />
+
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size16">사용자 피드백을 공개로 할지 비공개로 할지도 결정해야 함 $\rightarrow$ 사용자 행동, 사용자 경험, 피드백 품질에 큰 영향을 줄 수 있음, 비공개 환경에서 솔직해지고 더 좋은 품질의 신호를 얻을 수 있음 But, 비공개 신호는 발견 가능성 discoverability, 설명 가능성 explainability를 감소시킬 수 있음 (e.g. 좋아요를 숨기고 팔로우하는 사람들의 좋아요 기반으로 트윗 추천&nbsp; <span style="color: #333333; text-align: start;">$\rightarrow$ 왜 특정 트윗이 뜨는지 이해 불가)</span></p>
+<p data-ke-size="size16">&nbsp;</p>
+<h3 data-ke-size="size23"><span style="color: #333333; text-align: start;">피드백의 한계</span></h3>
+<h4 data-ke-size="size20"><span style="color: #333333; text-align: start;">편향</span></h4>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li><b>관대함 편향 leniency bias</b>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>실제보다 긍정적으로 평가</li>
+<li>부정적으로 적으면 이유를 적어야 하니까 : 사용자 피드백에 추가적인 작업을 하도록 하면 안되는 이유
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>보통 5점을 줘야한다는 압박을 느끼고 문제가 있으면 4점을 줌 : 우버 운전기사 평균이 4.8, 4.6 미만이면 퇴출될 위기에 처함, 사용자 평점의 분포를 살펴보는 것이 중요함</li>
+<li>더 세밀한 피드백을 원하면 숫자 대신 문장 선택지를 보여줘서 낮은 점수가 주는 부정적인 느낌 줄이기</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><b>무작위성</b>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>신중하게 생각할 동기가 부족해서 아무렇게나 피드백을 줆</li>
+</ul>
+</li>
+<li><b>위치 편향</b>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>일반적으로 첫번째 선택</li>
+<li>위치에 따른 제안의 실제 성공률 계산하는 모델 만들어서 줄이기</li>
+</ul>
+</li>
+<li><b>선호도 편향</b>
+<ul style="list-style-type: disc;" data-ke-list-type="disc">
+<li>영향을 주는 다른 여러 편향</li>
+<li>최근성 편향 recency bias : 두 개 비교 시 마지막 응답 선호</li>
+</ul>
+</li>
+</ul>
+<p data-ke-size="size16">&nbsp;</p>
+<p data-ke-size="size18">퇴화 피드백 루프</p>
+<p data-ke-size="size18">사용자 피드백은 기본적으로 불완전함 : 보여준 것에 대한 피드백만 얻을 수 있음</p>
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li><b>퇴화 피드백 루프 degenerate feedback loop&nbsp;</b>
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>사용자 피드백이 모델의 동작을 정하는 시스템의 경우 생길 수 있음</li>
+<li>예측 자체가 피드백에 영향을 주고 피드백이 다시 모델의 다음 버전에 영향을 주면서 초기 편향이 점점 심해지는 현상
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>e.g. A랑 B랑 비슷한데 초기에 순위가 높았던게 계속 인기를 얻고 순위를 유지하는 현상</li>
+<li>노출 편향, 인기 편향, 필터 버블</li>
+</ul>
+</li>
+<li>제품의 초점과 사용자층을 바꿀 수 있음
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>인종차별, 성차별, 선정적 콘텐츠 선호 등 편향을 키울 수 있음</li>
+</ul>
+</li>
+<li>대화형 에이전트를 사용자 피드백에 따라 동작을 수정하면 거짓말쟁이로 만들 수 있음
+<ul style="list-style-type: circle;" data-ke-list-type="circle">
+<li>정확하거나 유익한 것보다는 사용자가 듣고 싶어하는 응답을 하도록 (아첨)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
